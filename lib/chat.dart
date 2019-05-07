@@ -68,7 +68,6 @@ class ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    focusNode.addListener(onFocusChange);
 
     groupChatId = '';
 
@@ -79,19 +78,10 @@ class ChatScreenState extends State<ChatScreen> {
     readLocal();
   }
 
-  void onFocusChange() {
-    if (focusNode.hasFocus) {
-      // Hide sticker when keyboard appear
-      setState(() {
-        isShowSticker = false;
-      });
-    }
-  }
-
   readLocal() async {
-    prefs = await SharedPreferences.getInstance();
-    id = prefs.getString('id') ?? '';
-    if (id.hashCode <= peerId.hashCode) {
+    prefs = await SharedPreferences.getInstance(); //Get SharedPreference instance
+    id = prefs.getString('id') ?? ''; //Retrieve user id from local
+    if (id.hashCode <= peerId.hashCode) { //Create chat Id
       groupChatId = '$id-$peerId';
     } else {
       groupChatId = '$peerId-$id';
@@ -100,7 +90,7 @@ class ChatScreenState extends State<ChatScreen> {
     setState(() {});
   }
 
-  Future getImage() async {
+  Future getImage() async { //Load user photo
     imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
 
     if (imageFile != null) {
@@ -111,15 +101,7 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void getSticker() {
-    // Hide keyboard when sticker appear
-    focusNode.unfocus();
-    setState(() {
-      isShowSticker = !isShowSticker;
-    });
-  }
-
-  Future uploadFile() async {
+  Future uploadFile() async { //Upload file to Firebase Storage
     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
     StorageReference reference = FirebaseStorage.instance.ref().child(fileName);
     StorageUploadTask uploadTask = reference.putFile(imageFile);
@@ -128,7 +110,7 @@ class ChatScreenState extends State<ChatScreen> {
       imageUrl = downloadUrl;
       setState(() {
         isLoading = false;
-        onSendMessage(imageUrl, 1);
+        onSendMessage(imageUrl, 1); //Send message as image when upload is finalized
       });
     }, onError: (err) {
       setState(() {
@@ -179,7 +161,7 @@ class ChatScreenState extends State<ChatScreen> {
       // Right (my message)
       return Row(
         children: <Widget>[
-          document['type'] == 0
+          document['type'] == 0 //If is text
           // Text
               ? Container(
             child: Text(
@@ -191,7 +173,7 @@ class ChatScreenState extends State<ChatScreen> {
             decoration: BoxDecoration(color: greyColor2, borderRadius: BorderRadius.circular(8.0)),
             margin: EdgeInsets.only(bottom: isLastMessageRight(index) ? 20.0 : 10.0, right: 10.0),
           )
-              : Container(
+              : Container( //If is image
             child: Material(
               child: CachedNetworkImage(
                 placeholder: (context, url) => Container(
@@ -274,8 +256,7 @@ class ChatScreenState extends State<ChatScreen> {
                   decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8.0)),
                   margin: EdgeInsets.only(left: 10.0),
                 )
-                    : document['type'] == 1
-                    ? Container(
+                    : Container(
                   child: Material(
                     child: CachedNetworkImage(
                       placeholder: (context, url) => Container(
@@ -314,15 +295,6 @@ class ChatScreenState extends State<ChatScreen> {
                   ),
                   margin: EdgeInsets.only(left: 10.0),
                 )
-                    : Container(
-                  child: new Image.asset(
-                    'images/${document['content']}.gif',
-                    width: 100.0,
-                    height: 100.0,
-                    fit: BoxFit.cover,
-                  ),
-                  margin: EdgeInsets.only(bottom: isLastMessageRight(index) ? 20.0 : 10.0, right: 10.0),
-                ),
               ],
             ),
 
@@ -362,14 +334,7 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   Future<bool> onBackPress() {
-    if (isShowSticker) {
-      setState(() {
-        isShowSticker = false;
-      });
-    } else {
-      Navigator.pop(context);
-    }
-
+    Navigator.pop(context);
     return Future.value(false);
   }
 
@@ -429,7 +394,7 @@ class ChatScreenState extends State<ChatScreen> {
           // Edit text
           Flexible(
             child: Container(
-              child: TextField(
+              child: TextField(  //https://docs.flutter.io/flutter/material/TextFormField-class.html
                 style: TextStyle(color: primaryColor, fontSize: 15.0),
                 controller: textEditingController,
                 decoration: InputDecoration.collapsed(
@@ -473,7 +438,7 @@ class ChatScreenState extends State<ChatScreen> {
             .collection(groupChatId)
             .orderBy('timestamp', descending: true)
             .limit(20)
-            .snapshots(),
+            .snapshots(), //Retrieve messages from collection on Firestore passing chat id
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Center(

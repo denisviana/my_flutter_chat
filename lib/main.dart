@@ -28,12 +28,14 @@ class MainScreenState extends State<MainScreen> {
   final String currentUserId;
 
   bool isLoading = false;
+  //Choices of toolbar menu
   List<Choice> choices = const <Choice>[
     const Choice(title: 'Settings', icon: Icons.settings),
     const Choice(title: 'Log out', icon: Icons.exit_to_app),
   ];
 
 
+  //Create layout of item list passing a documentSnapshot retrieved from Firestore
   Widget buildItem(BuildContext context, DocumentSnapshot document) {
     if (document['id'] == currentUserId) {
       return Container();
@@ -56,7 +58,8 @@ class MainScreenState extends State<MainScreen> {
                         height: 70.0,
                         padding: EdgeInsets.all(15.0),
                       ),
-                      imageUrl: document['photoUrl'],
+
+                      imageUrl: document['photoUrl'], //Retrieve photoUrl from document
                       width: 70.0,
                       height: 70.0,
                       fit: BoxFit.cover,
@@ -70,7 +73,7 @@ class MainScreenState extends State<MainScreen> {
                         children: <Widget>[
                           Container(
                             child: Text(
-                              document['nickname'],
+                              document['nickname'], //retrieve nickname from document
                               style: TextStyle(color: primaryColor),
                             ),
                             alignment: Alignment.centerLeft,
@@ -78,7 +81,7 @@ class MainScreenState extends State<MainScreen> {
                           ),
                           Container(
                             child: Text(
-                              '${document['lastMessage'] ?? ''}',
+                              '${document['lastMessage'] ?? ''}', //retrieve last message from document
                               style: TextStyle(color: Colors.black38),
                             ),
                             alignment: Alignment.centerLeft,
@@ -92,10 +95,10 @@ class MainScreenState extends State<MainScreen> {
                 ],
               ),
               onPressed: () {
-                Navigator.push(
+                Navigator.push( //When tap in item list
                     context,
                     MaterialPageRoute(
-                        builder: (context) => Chat(
+                        builder: (context) => Chat( //Navigate do chat screen passing url image of user
                           peerId: document.documentID,
                           peerAvatar: document['photoUrl'],
                         )));
@@ -117,14 +120,14 @@ class MainScreenState extends State<MainScreen> {
   }
 
   void onItemMenuPress(Choice choice) {
-    if (choice.title == 'Log out') {
+    if (choice.title == 'Log out') { //Do logout
       handleSignOut();
     } else {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => Settings()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => Settings())); //Navigate to Settings screen
     }
   }
 
-  Future<Null> handleSignOut() async {
+  Future<Null> handleSignOut() async { //Handle signout
     this.setState(() {
       isLoading = true;
     });
@@ -135,7 +138,7 @@ class MainScreenState extends State<MainScreen> {
       isLoading = false;
     });
 
-    Navigator.of(context)
+    Navigator.of(context) //Navigate to Login
         .pushAndRemoveUntil(MaterialPageRoute(builder: (context) => MyApp()), (Route<dynamic> route) => false);
   }
 
@@ -182,17 +185,18 @@ class MainScreenState extends State<MainScreen> {
         children: <Widget>[
           // List
           Container(
-            child: StreamBuilder(
-              stream: Firestore.instance.collection('users').snapshots(),
+            child: StreamBuilder( //StreamBuilder receive a stream from Firestore
+              stream: Firestore.instance.collection('users').snapshots(), //Retrieving Data from User Collection at Firebase
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData) { //Check if has data
                   return Center(
-                    child: CircularProgressIndicator(
+                    child: CircularProgressIndicator( //If not, show loading
                       valueColor: AlwaysStoppedAnimation<Color>(themeColor),
                     ),
                   );
                 } else {
-                  return ListView.builder(
+                  //https://docs.flutter.io/flutter/widgets/ListView/ListView.builder.html
+                  return ListView.builder( //if true build user list passing a list of documents from Firestore
                     padding: EdgeInsets.all(10.0),
                     itemBuilder: (context, index) => buildItem(context, snapshot.data.documents[index]),
                     itemCount: snapshot.data.documents.length,

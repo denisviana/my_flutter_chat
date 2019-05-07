@@ -33,7 +33,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen> {
-  final GoogleSignIn googleSignIn = GoogleSignIn();
   static final FacebookLogin facebookSignIn = FacebookLogin();
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   SharedPreferences prefs;
@@ -55,9 +54,9 @@ class LoginScreenState extends State<LoginScreen> {
 
     prefs = await SharedPreferences.getInstance();
 
-    isLoggedIn = await googleSignIn.isSignedIn();
+    isLoggedIn = (await firebaseAuth.currentUser() != null); //Check if user is logged in
     if (isLoggedIn) {
-      Navigator.pushReplacement(
+      Navigator.pushReplacement( //if true navigate to MainScreen
         context,
         MaterialPageRoute(builder: (context) => MainScreen(currentUserId: prefs.getString('id'))),
       );
@@ -75,17 +74,15 @@ class LoginScreenState extends State<LoginScreen> {
       isLoading = true;
     });
 
-    final FacebookLoginResult result = await facebookSignIn.logInWithReadPermissions(['email'])
-    .then((value){
-      return value;
-    }).catchError((error){
-      print(error);
-    });
+    //Do login on Facebook and retrieve accesstoken
+    final FacebookLoginResult result = await facebookSignIn.logInWithReadPermissions(['email']);
 
+    //Create credential with token to authenticate on firebase
     final AuthCredential credential = FacebookAuthProvider.getCredential(
       accessToken: result.accessToken.token
     );
 
+    //Authenticate on firebase
     FirebaseUser firebaseUser = await firebaseAuth.signInWithCredential(credential);
 
     if (firebaseUser != null) {
@@ -134,7 +131,7 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold( //https://docs.flutter.io/flutter/material/Scaffold-class.html
       backgroundColor: Colors.white,
         appBar: AppBar(
           elevation: 0.0,
@@ -147,7 +144,11 @@ class LoginScreenState extends State<LoginScreen> {
             Positioned(
               top: 30.0,
               child: Image(
-                image: AssetImage("images/love.png"),
+                //See more about handle images here:
+                // https://flutter.dev/docs/development/ui/assets-and-images;
+                // https://docs.flutter.io/flutter/painting/BoxFit-class.html;
+                // https://docs.flutter.io/flutter/widgets/Image-class.html
+                image: AssetImage("images/love.png"), //Logo in Login Screen
                 width: 100.0,
               )
             ),
